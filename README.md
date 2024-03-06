@@ -1,18 +1,31 @@
 we will develop a recursive descent parser with the following grammar:
 
 statement -> expression SEMI
+
 expression -> equality
+
 equality -> comparison equality_recursive
+
 equality_recursive-> ℇ | (“！=”| “==” ) equality
+
 comparison → term  comparison_recursive
+
 comparison_recursive-> ℇ | ( ">" | ">=" | "<" | "<=" ) comparison
+
 term → factor term_recursive
+
 term_recursive -> ℇ | (“-”|”+”) term
+
 factor -> unary factor_recursive
+
 factor_recursive-> ℇ | (“/”|”*”) factory
+
 unary →  primary | unary_recursive
+
 unary_recursive -> ℇ | (“!”|”-”) unary
+
 primary → NUMBER | STRING | "true" | "false" | "nil"  |  "(" expression  ")" | ℇ 
+
 
 let's let a new file named recursive_descent_parser.js in the folder of parser, first we construct the framework for our parser:
 ```js
