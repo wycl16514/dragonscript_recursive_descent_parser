@@ -299,6 +299,8 @@ parse = () => {
         if (this.matchTokens([Scanner.SEMICOLON])) {
             return
         }
+
+        throw new Error("TODO")
     }
 
     primary = (parentNode) => {
