@@ -340,27 +340,21 @@ it("should parse expression with + and - operatior", () => {
 The case will fail because some parsing functions related to parsing process throw exception, now we can change those functions and make the test case passed:
 ```js
     termRecursive = (parentNode) => {
+       //term_recursive -> epsilon | ("-" | "+") term
         const opToken = this.matchTokens([Scanner.MINUS, Scanner.PLUS])
         if (opToken === null) {
             //term_recursive -> epsilon
-            console.log("term recursive epsilon")
             return
         }
-        //term_recursive ->  ("-" | "+") term
-        let nodeName = ""
-        if (opToken.token === Scanner.MINUS) {
-            nodeName = "MINUS"
-        } else {
-            nodeName = "ADD"
-        }
-        const opNode = this.createParseTreeNode(nodeName)
-        opNode.attributes = {
+        //term_recursive ->   ("-" | "+") term
+        const termRecursiveNode = this.createParseTreeNode("termRecursive")
+        termRecursiveNode.attributes = {
             value: opToken.lexeme,
             token: opToken,
         }
-        parentNode.children.push(opNode)
+        parentNode.children.push(termRecursiveNode)
         this.advance()
-        this.term(opNode)
+        this.term(termRecursiveNode)
     }
 
 factorRecursive = (parentNode) => {
