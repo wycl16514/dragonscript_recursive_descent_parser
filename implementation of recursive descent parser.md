@@ -380,11 +380,11 @@ factorRecursive = (parentNode) => {
         if current token can be matched in primary then choose primary,
         otherwise if the current token is ! or -, then choose unary_recursive
         */
-        const unary = this.createParseTreeNode("unary")
-        if (this.primary(unary) === false) {
-            this.unaryRecursive(unary)
+        const unaryNode = this.createParseTreeNode("unary")
+        if (this.primary(unaryNode) === false) {
+            this.unaryRecursive(unaryNode)
         }
-        parentNode.children.push(unary)
+        parentNode.children.push(unaryNode)
     }
 
     unaryRecursive = (parentNode) => {
@@ -419,7 +419,58 @@ factorRecursive = (parentNode) => {
 we need to pay attention to several points, first the parsing of 1+2; "hello"+"world"; and 4-3 involes rules that are term_recursive, factor_recursive, 
 unary, unary_recursive, primary and we need to modify their conrresponding functions. Second notice code in unary, because the rule:
 unary->primary | unary_recursive
-this rule need to choose one from two rules(primary and unary_recursive), but how can we decide which one to choose? we check which rule can consume the current
-token, if the current token can consumed by primary, that is the current token is NUMBER or STRING, then we choose rule primary, otherwise we choose unary_recursive
-The third point is that we change the content of the error being threw, we add the function name in the error content, which can help us know which function 
-cause the test case to fail. After adding the above code we can make sure the newly added test case can be passed.
+this rule need to choose one from two rules(primary and unary_recursive), but how can we decide which one to choose? 
+
+we check which rule can consume the currenttoken, if the current token can consumed by primary, that is the current token is NUMBER or STRING, then we choose rule primary, otherwise we choose 
+unary_recursive The third point is that we change the content of the error being threw, we add the function name in the error content, which can help us know which function cause the test case to fail. 
+
+After adding the above code we can make sure the newly added test case can be passed.Let's add one more test case:
+```js
+ it("should parse expression with + or - and negative number", () => {
+        let parser = new RecursiveDescentParser("-1+2;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("1--2;")
+        expect(parser.parse).not.toThrow()
+    })
+```
+we need to enhance the parser enable it to handle negative number in expression, let's do the code as following:
+```js
+it("should parse expression with + or - and number with unary operator prefix", () => {
+        let parser = new RecursiveDescentParser("-1+2;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("1--2;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("!1-!-2;")
+        expect(parser.parse).not.toThrow()
+    })
+```
+you can see in the test case, we have quit complex expression that is !1-!-2, the !1 is negate of 1 which results to false, and !-2 is negate of -2 which results to true, if we can make our parser passes
+this case then the parser is quit powerful, let's have the following code to make it passed:
+```js
+unaryRecursive = (parentNode) => {
+        //unary_recursive -> epsilon |("!"|"-") unary
+        const opToken = this.matchTokens([Scanner.BANG, Scanner.MINUS])
+        if (opToken === null) {
+            //unary_recursive -> epsilon 
+            return
+        }
+
+        //unary_recursive -> ("!"|"-") unary
+        let opName = ""
+        if (opToken.token === Scanner.BANG) {
+            opName = "BANG"
+        } else {
+            opName = "MINUS"
+        }
+
+        const unaryRecursiveNode = this.createParseTreeNode("unary_recursive")
+        unaryRecursiveNode.attributes = {
+            value: opToken.lexeme,
+            token: opToken,
+        }
+        this.advance()
+        parentNode.children.push(unaryRecursiveNode)
+        this.unary(unaryRecursiveNode)
+    }
+```
+here we only need to change unaryRecursive function because it is responsible for handling unary operator ! and -, with the above code we can passed the test case above.
