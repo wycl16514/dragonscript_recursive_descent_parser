@@ -20,7 +20,7 @@ factor -> unary factor_recursive
 
 factor_recursive-> ℇ | (“/”|”*”) factory
 
-unary →  primary | unary_recursive
+unary →  primary unary_recursive
 
 unary_recursive -> ℇ | (“!”|”-”) unary
 
@@ -326,4 +326,100 @@ the parsing process is just turn those rules into function calls, notice that in
 rule that matching epsilon will do the same, and every function with suffix "Recursive" will throw an exception if the current token can't match semicolon, because our test case don't need to call into 
 them, the error throwing will help us to make newly add test cases fail.
 
-After adding the above code we can make sure our test case can pass.
+After adding the above code we can make sure our test case can pass.Now let's add more test cases and enhance our parser:
+```js
+it("should parse expression with + and - operatior", () => {
+        let parser = new RecursiveDescentParser("1+2;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser('"hello" + "world";')
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser('4 - 3;')
+        expect(parser.parse).not.toThrow()
+    })
+```
+The case will fail because some parsing functions related to parsing process throw exception, now we can change those functions and make the test case passed:
+```js
+    termRecursive = (parentNode) => {
+        const opToken = this.matchTokens([Scanner.MINUS, Scanner.PLUS])
+        if (opToken === null) {
+            //term_recursive -> epsilon
+            console.log("term recursive epsilon")
+            return
+        }
+        //term_recursive ->  ("-" | "+") term
+        let nodeName = ""
+        if (opToken.token === Scanner.MINUS) {
+            nodeName = "MINUS"
+        } else {
+            nodeName = "ADD"
+        }
+        const opNode = this.createParseTreeNode(nodeName)
+        opNode.attributes = {
+            value: opToken.lexeme,
+            token: opToken,
+        }
+        parentNode.children.push(opNode)
+        this.advance()
+        this.term(opNode)
+    }
+
+factorRecursive = (parentNode) => {
+        const opToken = this.matchTokens([Scanner.START, Scanner.SLASH])
+        if (opToken === null) {
+            //factor_recursive -> epsilon
+            return
+        }
+        //factor_recursive ->  ("*" "/") factor
+        throw new Error("factorRecursive TODO")
+    }
+
+ unary = (parentNode) => {
+        //unary -> primary | unary_recursive 
+        /*
+        we need to choose one of the two rules, which one should we choose?
+        if current token can be matched in primary then choose primary,
+        otherwise if the current token is ! or -, then choose unary_recursive
+        */
+        const unary = this.createParseTreeNode("unary")
+        if (this.primary(unary) === false) {
+            this.unaryRecursive(unary)
+        }
+        parentNode.children.push(unary)
+    }
+
+    unaryRecursive = (parentNode) => {
+        //unary_recursive -> epsilon |("!"|"-") unary
+        const opToken = this.matchTokens([Scanner.BANG, Scanner.MINUS])
+        if (opToken === null) {
+            //unary_recursive -> epsilon 
+            return
+        }
+
+        throw new Error("unaryRecursive TODO")
+
+    }
+
+    primary = (parentNode) => {
+        //primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | epsilon
+        const token = this.matchTokens([Scanner.NUMBER, Scanner.STRING])
+        if (token === null) {
+            //primary -> epsilon
+            return false
+        }
+        const primary = this.createParseTreeNode("primary")
+        primary.attributes = {
+            value: token.lexeme,
+            token: token,
+        }
+        parentNode.children.push(primary)
+        this.advance()
+        return true
+    }
+```
+we need to pay attention to several points, first the parsing of 1+2; "hello"+"world"; and 4-3 involes rules that are term_recursive, factor_recursive, 
+unary, unary_recursive, primary and we need to modify their conrresponding functions. Second notice code in unary, because the rule:
+unary->primary | unary_recursive
+this rule need to choose one from two rules(primary and unary_recursive), but how can we decide which one to choose? we check which rule can consume the current
+token, if the current token can consumed by primary, that is the current token is NUMBER or STRING, then we choose rule primary, otherwise we choose unary_recursive
+The third point is that we change the content of the error being threw, we add the function name in the error content, which can help us know which function 
+cause the test case to fail. After adding the above code we can make sure the newly added test case can be passed.
