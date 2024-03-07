@@ -199,12 +199,12 @@ parse = () => {
         //clear all
         this.parseTrees = []
         //execute the first rule
-        this.stmt()
+        this.statement()
         treeRoot.children = this.parseTrees
         return treeRoot
     }
 
-    stmt = () => {
+    statement = () => {
         const stmtNode = this.createParseTreeNode("stmt")
         //stmt -> expression SEMI
         this.expression(stmtNode)
