@@ -156,3 +156,167 @@ adding the above code can make sure the second case can be passed. We add the fo
         })
     })
 ```
+We can begin our parsing process now, first we add a test case for parsing make sure it fail then we can add code to satisfy it:
+```js
+describe("Testing creation of abstract syntax tree ", () => {
+    it("should parse expression with only number or string", () => {
+        let parser = new RecursiveDescentParser("1;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser('"hello world";')
+        expect(parser.parse).not.toThrow()
+    })
+
+})
+```
+we havn't add the parse function to our parser, the test case is sure to fail, first let's add some helper function first:
+```js
+createParseTreeNode = (name) => {
+        return {
+            name: name,
+            children: [],
+            attributes: "",
+        }
+    }
+
+    matchTokens = (tokens) => {
+        //check the given token can match the given tokens or not
+        const curToken = this.getToken()
+        for (let i = 0; i < tokens.length; i++) {
+            if (curToken.token == tokens[i]) {
+                return curToken
+            }
+        }
+
+        return null
+    }
+```
+createParseTreeNode is still the same, but matchTokens will match an array of tokens, it will get the current token and loop over the passed token array, if one of them can match the current token, it 
+will return the matched token, otherwise it will return null, now let's add the grammar rule implementation:
+```js
+parse = () => {
+        //clear the parsing tree
+        const treeRoot = this.createParseTreeNode("root")
+        //clear all
+        this.parseTrees = []
+        //execute the first rule
+        this.stmt()
+        treeRoot.children = this.parseTrees
+        return treeRoot
+    }
+
+    stmt = () => {
+        const stmtNode = this.createParseTreeNode("stmt")
+        //stmt -> expression SEMI
+        this.expression(stmtNode)
+        const token = this.matchTokens([Scanner.SEMICOLON])
+        if (token === null) {
+            throw new Error("statement miss matching SEMICOLON")
+        }
+        this.parseTrees.push(stmtNode)
+    }
+
+    expression = (parentNode) => {
+        //expression -> equality
+        const exprNode = this.createParseTreeNode("expression")
+        this.equality(exprNode)
+        parentNode.children.push(exprNode)
+    }
+
+    equality = (parentNode) => {
+        //equality -> comparison equality_recursive
+        const equNode = this.createParseTreeNode("equality")
+        this.comparison(equNode)
+        this.equalityRecursive(equNode)
+        parentNode.children.push(parentNode)
+    }
+
+    comparison = (parentNode) => {
+        //comparison -> term comparison_recursive
+        const compaNode = this.createParseTreeNode("comparison")
+        this.term(compaNode)
+        this.comparisonRecursive(compaNode)
+        parentNode.children.push(compaNode)
+    }
+
+    equalityRecursive = (parentNode) => {
+        if (this.matchTokens([Scanner.SEMICOLON])) {
+            return
+        }
+        //equality_recursive -> ("!="|"==") equality
+        throw new Error("TODO")
+    }
+
+    comparisonRecursive = (parentNode) => {
+        if (this.matchTokens([Scanner.SEMICOLON])) {
+            return
+        }
+        //comparison -> epsilon | (">" | ">=" | "<" | "<=") comparison
+        throw new Error("TODO")
+    }
+
+    term = (parentNode) => {
+        //term -> factor term_recursive
+        const term = this.createParseTreeNode("term")
+        this.factor(term)
+        this.termRecursive(term)
+        parentNode.children.push(term)
+    }
+
+    termRecursive = (parentNode) => {
+        if (this.matchTokens([Scanner.SEMICOLON])) {
+            return
+        }
+        //term_recursive -> epsilon | ("-" | "+")
+        throw new Error("TODO")
+    }
+
+    factor = (parentNode) => {
+        //factor -> unary factor_recursive
+        const factor = this.createParseTreeNode("factor")
+        this.unary(factor)
+        this.factorRecursive(factor)
+        parentNode.children.push(factor)
+    }
+
+    factorRecursive = (parentNode) => {
+        if (this.matchTokens([Scanner.SEMICOLON])) {
+            return
+        }
+        //factor_recursive -> epsilon | ("*" "/") factor
+        throw new Error("TODO")
+    }
+
+    unary = (parentNode) => {
+        //unary -> primary | unary_recursive 
+        const unary = this.createParseTreeNode("unary")
+        this.primary(unary)
+        this.unaryRecursive(unary)
+        parentNode.children.push(unary)
+    }
+
+    unaryRecursive = (parentNode) => {
+        //unary_recursive -> epsilon | unary
+        if (this.matchTokens([Scanner.SEMICOLON])) {
+            return
+        }
+    }
+
+    primary = (parentNode) => {
+        //primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | epsilon
+        const token = this.matchTokens([Scanner.NUMBER, Scanner.STRING])
+        if (token !== null) {
+            this.advance()
+        } else {
+            //primary -> epsilon
+            return
+        }
+
+        const primary = this.createParseTreeNode("primary")
+        primary.attributes = {
+            value: token.lexeme,
+            token: token,
+        }
+        parentNode.children.push(primary)
+    }
+
+```
