@@ -419,15 +419,7 @@ we check which rule can consume the currenttoken, if the current token can consu
 unary_recursive The third point is that we change the content of the error being threw, we add the function name in the error content, which can help us know which function cause the test case to fail. 
 
 After adding the above code we can make sure the newly added test case can be passed.Let's add one more test case:
-```js
- it("should parse expression with + or - and negative number", () => {
-        let parser = new RecursiveDescentParser("-1+2;")
-        expect(parser.parse).not.toThrow()
-        parser = new RecursiveDescentParser("1--2;")
-        expect(parser.parse).not.toThrow()
-    })
-```
-we need to enhance the parser enable it to handle negative number in expression, let's do the code as following:
+
 ```js
 it("should parse expression with + or - and number with unary operator prefix", () => {
         let parser = new RecursiveDescentParser("-1+2;")
@@ -450,13 +442,6 @@ unaryRecursive = (parentNode) => {
         }
 
         //unary_recursive -> ("!"|"-") unary
-        let opName = ""
-        if (opToken.token === Scanner.BANG) {
-            opName = "BANG"
-        } else {
-            opName = "MINUS"
-        }
-
         const unaryRecursiveNode = this.createParseTreeNode("unary_recursive")
         unaryRecursiveNode.attributes = {
             value: opToken.lexeme,
