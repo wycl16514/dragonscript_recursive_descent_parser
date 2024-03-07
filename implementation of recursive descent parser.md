@@ -41,7 +41,7 @@ export default class RecursiveDescentParser {
         this.tokens = []
         this.current = -1
         //contains root for each arithmetic express
-        this.parseTrees = []
+        this.parseTree = []
     }
 }
 ```
@@ -197,10 +197,10 @@ parse = () => {
         //clear the parsing tree
         const treeRoot = this.createParseTreeNode("root")
         //clear all
-        this.parseTrees = []
+        this.parseTree = []
         //execute the first rule
         this.statement()
-        treeRoot.children = this.parseTrees
+        treeRoot.children = this.parseTree
         return treeRoot
     }
 
@@ -212,7 +212,7 @@ parse = () => {
         if (token === null) {
             throw new Error("statement miss matching SEMICOLON")
         }
-        this.parseTrees.push(stmtNode)
+        this.parseTree.push(stmtNode)
     }
 
     expression = (parentNode) => {
