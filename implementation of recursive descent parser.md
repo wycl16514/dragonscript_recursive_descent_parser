@@ -320,3 +320,8 @@ parse = () => {
     }
 
 ```
+the parsing process is just turn those rules into function calls, notice that in primary, if we havn't match given tokens, it will return directly, this is equivalence to the rule primary->epsilon, any 
+rule that matching epsilon will do the same, and every function with suffix "Recursive" will throw an exception if the current token can't match semicolon, because our test case don't need to call into 
+them, the error throwing will help us to make newly add test cases fail.
+
+After adding the above code we can make sure our test case can pass.
