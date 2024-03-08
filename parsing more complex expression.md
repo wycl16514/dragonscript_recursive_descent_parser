@@ -112,4 +112,68 @@ comparisonRecursive = (parentNode) => {
         }
         return true
 ```
-After adding the above code, the newly added test case can be passed
+After adding the above code, the newly added test case can be passed, we come to the final piece of the pussle, we add the support for comparison and equliaty 
+operator and we can complete the parsing of expression, let's add the test case for comparison:
+```js
+it("should support comparison operator", () => {
+        let parser = new RecursiveDescentParser("1*2+(4-3) > (3+1)/2;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("1*2+(4-3) >= (3+1)/2;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("1*2+(4-3) <= (3+1)/2+4;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("1*2+(4-3) < (3+1)/2+4;")
+        expect(parser.parse).not.toThrow()
+    })
+```
+run the test and make sure it fail, then we can add code to handle it:
+```js
+comparisonRecursive = (parentNode) => {
+        const opToken = this.matchTokens([Scanner.LESS_EQUAL, Scanner.LESS,
+        Scanner.GREATER, Scanner.GREATER_EQUAL])
+        if (!opToken) {
+            //comprison -> epsilon
+            return
+        }
+        //comparison ->  (">" | ">=" | "<" | "<=") comparison
+        const comparisonRecursiveNode = this.createParseTreeNode("comparison_recursive")
+        comparisonRecursiveNode.attributes = {
+            value: opToken.lexeme,
+            token: opToken,
+        }
+        parentNode.children.push(comparisonRecursiveNode)
+        //over the comparison operator
+        this.advance()
+        this.comparison(comparisonRecursiveNode)
+    }
+```
+Adding the above code can make our case passed, let's do the last one, that is for the equality operator:
+```js
+it("should support equality operator", () => {
+        let parser = new RecursiveDescentParser("1*2+(4-3) > (3+1)/2 == true;")
+        expect(parser.parse).not.toThrow()
+        parser = new RecursiveDescentParser("1*2+(4-3) > (3+1)/2 != false;")
+        expect(parser.parse).not.toThrow()
+    })
+```
+Run the test and make sure it failed, then we go to the parser code to handle it:
+```js
+equalityRecursive = (parentNode) => {
+        const opToken = this.matchTokens([Scanner.BANG_EQUAL, Scanner.EQUAL_EQUAL])
+        if (!opToken) {
+            return
+        }
+        //equality_recursive -> ("!="|"==") equality
+        const equalityRecursiveNode = this.createParseTreeNode("equality_recursive")
+        equalityRecursiveNode.attributes = {
+            value: opToken.lexeme,
+            token: opToken,
+        }
+        parentNode.children.push(equalityRecursiveNode)
+        //over the equality operator
+        this.advance()
+        this.equality(equalityRecursiveNode)
+    }
+
+```
+Having the above code, we can make the last test case passed, now we complete the parsing for the expression, our parser has some muscles now.
